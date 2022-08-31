@@ -64,15 +64,48 @@ function Autobind(_, _2, descriptor) {
         return adjDescriptor;
     }
 }
+//PROJECT LIST CLASS
+/* It gets the template and host elements from the DOM, imports the template element's content, and
+assigns the first element of that content to the element property. It then attaches the element to
+the host element, and renders the content */
+var ProjectList = /** @class */ (function () {
+    function ProjectList(type) {
+        this.type = type;
+        /* Getting the template and host elements from the DOM. */
+        this.templateElement = document.getElementById("project-list");
+        this.hostElement = document.getElementById("app");
+        /* Importing the template element's content, and assigning the first element of that content to the
+        element property. */
+        var importNode = document.importNode(this.templateElement.content, true);
+        this.element = importNode.firstElementChild;
+        this.element.id = "".concat(this.type, "-projects");
+        this.attach();
+        this.renderContent();
+    }
+    /**
+     * The function takes in a string, and then it sets the id of the ul element to the string, and then it
+     * sets the text content of the h2 element to the string.
+     */
+    ProjectList.prototype.renderContent = function () {
+        var listId = "".concat(this.type, "-projects-list");
+        this.element.querySelector("ul").id = listId;
+        this.element.querySelector("h2").textContent = this.type.toUpperCase() + ' PROJECTS';
+    };
+    ProjectList.prototype.attach = function () {
+        this.hostElement.insertAdjacentElement('afterbegin', this.element);
+    };
+    return ProjectList;
+}());
+//PROJECT INPUT CLASS
 /* The constructor takes two arguments, idTemplate and idHost, and then uses those arguments to get the
 template and host elements from the DOM. It then imports the template element's content, and assigns
 the first element of that content to the element property. Finally, it calls the attach method,
 passing the element property as an argument. */
 var ProjectInput = /** @class */ (function () {
-    function ProjectInput(idTemplate, idHost) {
+    function ProjectInput() {
         /* Getting the template and host elements from the DOM. */
-        this.templateElement = document.getElementById(idTemplate);
-        this.hostElement = document.getElementById(idHost);
+        this.templateElement = document.getElementById("project-input");
+        this.hostElement = document.getElementById("app");
         /* Importing the template element's content, and assigning the first element of that content to the
         element property. */
         var importNode = document.importNode(this.templateElement.content, true);
@@ -166,4 +199,6 @@ var ProjectInput = /** @class */ (function () {
     return ProjectInput;
 }());
 /* Creating new instances of the ProjectInput class. */
-var projInput = new ProjectInput("project-input", "app");
+var projInput = new ProjectInput();
+var projListFinished = new ProjectList('finished');
+var projListActive = new ProjectList('active');

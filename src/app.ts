@@ -8,6 +8,8 @@ interface Validatable {
     max?: number;
 }
 
+type TypeElement = 'active' | 'finished';
+
 /**
  * If the input is required, it must have a value. If the input has a minLength, it must be at least
  * that long. If the input has a maxLength, it must be at most that long. If the input has a min, it
@@ -75,6 +77,46 @@ function Autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
     }
 }
 
+//PROJECT LIST CLASS
+/* It gets the template and host elements from the DOM, imports the template element's content, and
+assigns the first element of that content to the element property. It then attaches the element to
+the host element, and renders the content */
+class ProjectList {
+    templateElement: HTMLTemplateElement;
+    hostElement: HTMLDivElement;
+    element: HTMLElement;
+
+    constructor(private type: TypeElement) {
+        /* Getting the template and host elements from the DOM. */
+        this.templateElement = document.getElementById("project-list")! as HTMLTemplateElement;
+        this.hostElement = document.getElementById("app")! as HTMLDivElement;
+
+        /* Importing the template element's content, and assigning the first element of that content to the
+        element property. */
+        const importNode = document.importNode(this.templateElement.content, true);
+        this.element = importNode.firstElementChild as HTMLElement;
+        this.element.id = `${this.type}-projects`;
+
+        this.attach();
+        this.renderContent();
+    }
+
+    /**
+     * The function takes in a string, and then it sets the id of the ul element to the string, and then it
+     * sets the text content of the h2 element to the string.
+     */
+    private renderContent() {
+        const listId = `${this.type}-projects-list`;
+        this.element.querySelector("ul")!.id = listId;
+        this.element.querySelector("h2")!.textContent = this.type.toUpperCase() + ' PROJECTS';
+    }
+
+    private attach() {
+        this.hostElement.insertAdjacentElement('afterbegin', this.element)
+    }
+}
+
+//PROJECT INPUT CLASS
 /* The constructor takes two arguments, idTemplate and idHost, and then uses those arguments to get the
 template and host elements from the DOM. It then imports the template element's content, and assigns
 the first element of that content to the element property. Finally, it calls the attach method,
@@ -87,11 +129,11 @@ class ProjectInput {
     descriptionInputElement: HTMLInputElement;
     peopleInputElement: HTMLInputElement;
 
-    constructor(idTemplate: string, idHost: string) {
+    constructor() {
 
         /* Getting the template and host elements from the DOM. */
-        this.templateElement = document.getElementById(idTemplate)! as HTMLTemplateElement;
-        this.hostElement = document.getElementById(idHost)! as HTMLDivElement;
+        this.templateElement = document.getElementById("project-input")! as HTMLTemplateElement;
+        this.hostElement = document.getElementById("app")! as HTMLDivElement;
 
         /* Importing the template element's content, and assigning the first element of that content to the
         element property. */
@@ -199,5 +241,8 @@ class ProjectInput {
 
 
 /* Creating new instances of the ProjectInput class. */
-const projInput = new ProjectInput("project-input", "app");
+const projInput = new ProjectInput();
+const projListFinished = new ProjectList('finished');
+const projListActive = new ProjectList('active');
+
 
