@@ -1,4 +1,19 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -18,13 +33,32 @@ var Project = /** @class */ (function () {
     }
     return Project;
 }());
+//STATE CLASS
+/* The State class is a generic class that takes a type parameter T. It has a protected property called
+listeners that is an array of functions that take a parameter of type T and return void. It also has
+a method called addListener that takes a function as an argument and adds it to the listeners array */
+var State = /** @class */ (function () {
+    function State() {
+        this.listeners = [];
+    }
+    /**
+     * This function takes a function as an argument and adds it to the listeners array.
+     * @param {Function} listenerFn - The function that will be called when the event is triggered.
+     */
+    State.prototype.addListener = function (listenerFn) {
+        this.listeners.push(listenerFn);
+    };
+    return State;
+}());
 //PROJECT STATE CLASS
 /* The ProjectState class is a class that holds an array of projects. It has a method called addProject
 that adds a new project to the array. */
-var ProjectState = /** @class */ (function () {
+var ProjectState = /** @class */ (function (_super) {
+    __extends(ProjectState, _super);
     function ProjectState() {
-        this.listeners = [];
-        this.projects = [];
+        var _this = _super.call(this) || this;
+        _this.projects = [];
+        return _this;
     }
     /**
      * If the instance exists, return it. If it doesn't exist, create it and return it.
@@ -35,13 +69,6 @@ var ProjectState = /** @class */ (function () {
             return this.instance;
         }
         return this.instance = new ProjectState();
-    };
-    /**
-     * This function takes a function as an argument and adds it to the listeners array.
-     * @param {Function} listenerFn - The function that will be called when the event is triggered.
-     */
-    ProjectState.prototype.addListener = function (listenerFn) {
-        this.listeners.push(listenerFn);
     };
     /**
      * This function takes in three arguments, title, description, and numOfPeople, and creates a new
@@ -59,7 +86,7 @@ var ProjectState = /** @class */ (function () {
         }
     };
     return ProjectState;
-}());
+}(State));
 /* Creating a new instance of the ProjectState class. */
 var projState = ProjectState.getInstance();
 var ProjectStatus;
@@ -126,28 +153,81 @@ function Autobind(_, _2, descriptor) {
         return adjDescriptor;
     }
 }
-//PROJECT LIST CLASS
-/* It gets the template and host elements from the DOM, imports the template element's content, and
-assigns the first element of that content to the element property. It then attaches the element to
-the host element, and renders the content */
-var ProjectList = /** @class */ (function () {
-    function ProjectList(type) {
-        var _this = this;
-        this.type = type;
+//COMPONENT BASE CLASS
+/* The above code is creating a class called Component. This class is an abstract class, meaning that
+it cannot be instantiated. It is meant to be extended by other classes. The class has a constructor
+that takes in four parameters. The first parameter is a string that represents the id of the
+template element. The second parameter is a string that represents the id of the host element. The
+third parameter is a boolean that determines whether the element will be inserted at the beginning
+or the end of the host element. The fourth parameter is a string that represents the id of the
+element that will be created. The */
+var Component = /** @class */ (function () {
+    function Component(templateId, hostElementId, insertAtStart, newElementId) {
         /* Getting the template and host elements from the DOM. */
-        this.templateElement = document.getElementById("project-list");
-        this.hostElement = document.getElementById("app");
-        /* Creating a property called assignedProjects and assigning it an empty array. */
-        this.assignedProjects = [];
+        this.templateElement = document.getElementById(templateId);
+        this.hostElement = document.getElementById(hostElementId);
         /* Importing the template element's content, and assigning the first element of that content to the
         element property. */
         var importNode = document.importNode(this.templateElement.content, true);
         this.element = importNode.firstElementChild;
-        this.element.id = "".concat(this.type, "-projects");
+        if (newElementId) {
+            this.element.id = newElementId;
+        }
+        this.attach(insertAtStart);
+    }
+    /**
+     * This function takes the element that was created in the constructor and inserts it into the DOM.
+     */
+    Component.prototype.attach = function (insertAtBeginning) {
+        this.hostElement.insertAdjacentElement(insertAtBeginning ? 'afterbegin' : 'beforeend', this.element);
+    };
+    return Component;
+}());
+//PROJECT LIST CLASS
+/* The `ProjectList` class is a class that extends the `Component` class, and it has a constructor that
+takes in a string, and it has a `configure` method that adds a listener to the `projState` object,
+and it has a `renderProjects` method that renders the projects, and it has a `renderContent` method
+that sets the id of the ul element to the string, and it sets the text content of the h2 element to
+the string. */
+var ProjectList = /** @class */ (function (_super) {
+    __extends(ProjectList, _super);
+    function ProjectList(type) {
+        var _this = 
+        /* Calling the constructor of the parent class. */
+        _super.call(this, "project-list", "app", false, "".concat(type, "-projects")) || this;
+        _this.type = type;
+        /* Assigning an empty array to the assignedProjects property of the class. */
+        _this.assignedProjects = [];
+        _this.configure();
+        /* Calling the renderContent method. */
+        _this.renderContent();
+        return _this;
+    }
+    /**
+     * "If the projState object is not undefined, then add a listener to the projState object that filters
+     * the projects based on the type of the project, and then renders the projects."
+     *
+     * The above function is a bit more complicated than the previous functions, so let's break it down.
+     *
+     * First, we check if the projState object is not undefined. If it is not undefined, then we add a
+     * listener to the projState object.
+     *
+     * The listener is a function that takes in an array of projects. The listener then filters the
+     * projects based on the type of the project.
+     *
+     * If the type of the project is active, then the listener filters the projects to only include
+     * projects that have a status of active.
+     *
+     * If the type of the project is finished, then the listener filters the projects to only include
+     * projects that have a status of finished.
+     *
+     *
+     */
+    ProjectList.prototype.configure = function () {
+        var _this = this;
         if (projState != undefined) {
             /* Adding a listener to the projState object. */
             projState.addListener(function (projects) {
-                debugger;
                 var relevantProjects = projects.filter(function (prj) {
                     if (_this.type === 'active') {
                         return prj.status === ProjectStatus.Active;
@@ -160,10 +240,7 @@ var ProjectList = /** @class */ (function () {
                 _this.renderProjects();
             });
         }
-        /* Creating a new instance of the class and calling the attach and renderContent methods. */
-        this.attach();
-        this.renderContent();
-    }
+    };
     /**
      * "We're going to get the element with the id of `${this.type}-projects-list` and then we're going to
      * cast it to an HTMLUListElement. Then we're going to loop through the assignedProjects array and for
@@ -195,37 +272,35 @@ var ProjectList = /** @class */ (function () {
         this.element.querySelector("ul").id = listId;
         this.element.querySelector("h2").textContent = this.type.toUpperCase() + ' PROJECTS';
     };
-    /**
-     * This function takes the element that was created in the constructor and inserts it into the DOM.
-     */
-    ProjectList.prototype.attach = function () {
-        this.hostElement.insertAdjacentElement('afterbegin', this.element);
-    };
     return ProjectList;
-}());
+}(Component));
 //PROJECT INPUT CLASS
 /* The constructor takes two arguments, idTemplate and idHost, and then uses those arguments to get the
 template and host elements from the DOM. It then imports the template element's content, and assigns
 the first element of that content to the element property. Finally, it calls the attach method,
 passing the element property as an argument. */
-var ProjectInput = /** @class */ (function () {
+var ProjectInput = /** @class */ (function (_super) {
+    __extends(ProjectInput, _super);
     function ProjectInput() {
-        /* Getting the template and host elements from the DOM. */
-        this.templateElement = document.getElementById("project-input");
-        this.hostElement = document.getElementById("app");
-        /* Importing the template element's content, and assigning the first element of that content to the
-        element property. */
-        var importNode = document.importNode(this.templateElement.content, true);
-        this.element = importNode.firstElementChild;
-        this.element.id = "user-input";
+        var _this = _super.call(this, "project-input", "app", true, "user-input") || this;
         /* Getting the input elements from the form element. */
-        this.titleInputElement = this.element.querySelector('#title');
-        this.descriptionInputElement = this.element.querySelector('#description');
-        this.peopleInputElement = this.element.querySelector('#people');
-        this.configure();
-        /* Calling the attach method, passing the element property as an argument. */
-        this.attach(this.element);
+        _this.titleInputElement = _this.element.querySelector('#title');
+        _this.descriptionInputElement = _this.element.querySelector('#description');
+        _this.peopleInputElement = _this.element.querySelector('#people');
+        _this.configure();
+        return _this;
     }
+    /**
+     * This function does nothing.
+     */
+    ProjectInput.prototype.renderContent = function () { };
+    /**
+     * The configure function adds an event listener to the form element, and when the form is
+     * submitted, the submitHandler function is called.
+     */
+    ProjectInput.prototype.configure = function () {
+        this.element.addEventListener("submit", this.submitHandler);
+    };
     /**
      * It takes the values from the input fields, checks if they are valid, and if they are, it returns
      * them as an array.
@@ -299,27 +374,13 @@ var ProjectInput = /** @class */ (function () {
         this.descriptionInputElement.value = '';
         this.peopleInputElement.value = '';
     };
-    /**
-     * The configure function adds an event listener to the form element, and when the form is
-     * submitted, the submitHandler function is called.
-     */
-    ProjectInput.prototype.configure = function () {
-        this.element.addEventListener("submit", this.submitHandler);
-    };
-    /**
-     * Insert the element before the host element.
-     * @param {HTMLFormElement} element - HTMLFormElement - The element to attach to the DOM.
-     */
-    ProjectInput.prototype.attach = function (element) {
-        this.hostElement.insertAdjacentElement("beforebegin", element);
-    };
     __decorate([
         Autobind
     ], ProjectInput.prototype, "submitHandler", null);
     return ProjectInput;
-}());
+}(Component));
 /* Creating new instances of the ProjectInput class. */
 var projInput = new ProjectInput();
-var projListFinished = new ProjectList('finished');
 var projListActive = new ProjectList('active');
+var projListFinished = new ProjectList('finished');
 //# sourceMappingURL=app.js.map
