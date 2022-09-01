@@ -1,3 +1,57 @@
+//PROJECT CLASS
+/* It creates a class called Project with the following properties: id, title, description, people, and
+status. */
+class Project {
+    constructor(public id: string, public title: string, public description: string, public people: number, public status: ProjectStatus) { }
+}
+//PROJECT STATE CLASS
+/* The ProjectState class is a class that holds an array of projects. It has a method called addProject
+that adds a new project to the array. */
+class ProjectState {
+    private listeners: Listener[] = [];
+    private projects: Project[] = [];
+    private static instance: ProjectState;
+
+    private constructor() { }
+    /**
+     * If the instance exists, return it. If it doesn't exist, create it and return it.
+     * * @returns The instance of the class.
+     */
+    static getInstance() {
+        if (this.instance) {
+            return this.instance;
+        }
+        return this.instance = new ProjectState();
+    }
+
+    /**
+     * This function takes a function as an argument and adds it to the listeners array.
+     * @param {Function} listenerFn - The function that will be called when the event is triggered.
+     */
+    addListener(listenerFn: Listener) {
+        this.listeners.push(listenerFn);
+    }
+
+    /**
+     * This function takes in three arguments, title, description, and numOfPeople, and creates a new
+     * project object with those arguments and pushes it into the projects array.
+     * @param {string} title - string, description: string, numOfPeople: number
+     * @param {string} description - string, numOfPeople: number
+     * @param {number} numOfPeople - number
+     */
+    addProject(title: string, description: string, numOfPeople: number) {
+        const newProject = new Project(Math.random().toString(), title, description, numOfPeople, ProjectStatus.Active)
+        this.projects.push(newProject);
+
+        for (const listenerFn of this.listeners) {
+            listenerFn(this.projects.slice())
+        }
+    }
+}
+
+/* Creating a new instance of the ProjectState class. */
+const projState = ProjectState.getInstance();
+
 /* An interface that is used to validate the input. */
 interface Validatable {
     value: string | number;
@@ -7,7 +61,8 @@ interface Validatable {
     min?: number;
     max?: number;
 }
-
+enum ProjectStatus { Active, Finished }
+type Listener = (items: Project[]) => void;
 type TypeElement = 'active' | 'finished';
 
 /**
@@ -82,14 +137,18 @@ function Autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
 assigns the first element of that content to the element property. It then attaches the element to
 the host element, and renders the content */
 class ProjectList {
+    /* Defining the types of the variables. */
     templateElement: HTMLTemplateElement;
     hostElement: HTMLDivElement;
     element: HTMLElement;
+    assignedProjects: any[];
 
     constructor(private type: TypeElement) {
         /* Getting the template and host elements from the DOM. */
         this.templateElement = document.getElementById("project-list")! as HTMLTemplateElement;
         this.hostElement = document.getElementById("app")! as HTMLDivElement;
+        /* Creating a property called assignedProjects and assigning it an empty array. */
+        this.assignedProjects = []
 
         /* Importing the template element's content, and assigning the first element of that content to the
         element property. */
@@ -97,8 +156,41 @@ class ProjectList {
         this.element = importNode.firstElementChild as HTMLElement;
         this.element.id = `${this.type}-projects`;
 
+        if (projState != undefined) {
+            /* Adding a listener to the projState object. */
+            projState.addListener((projects: Project[]) => {
+                this.assignedProjects = projects;
+                this.renderProjects();
+            })
+        }
+
+        /* Creating a new instance of the class and calling the attach and renderContent methods. */
         this.attach();
         this.renderContent();
+
+    }
+
+    /**
+     * "We're going to get the element with the id of `${this.type}-projects-list` and then we're going to
+     * cast it to an HTMLUListElement. Then we're going to loop through the assignedProjects array and for
+     * each item in the array we're going to create a new list item element, set the text content of that
+     * list item to the title of the project, and then append that list item to the list element."
+     * 
+     * The first thing we do is get the element with the id of `${this.type}-projects-list`. We're using a
+     * template literal here to get the id of the element we want to append our list items to. The
+     * `${this.type}` part of the template literal is going to be replaced with the value of the `type`
+     * property of the class. So if the class is an instance of the `ProjectList` class, the `type`
+     */
+    private renderProjects() {
+        const listEl = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
+        listEl.querySelector("li")?.remove();
+
+        for (const projItem of this.assignedProjects) {
+            const listItem = document.createElement("li")! as HTMLLIElement;
+            listItem.textContent = projItem.title;
+
+            listEl.appendChild(listItem);
+        }
     }
 
     /**
@@ -106,11 +198,15 @@ class ProjectList {
      * sets the text content of the h2 element to the string.
      */
     private renderContent() {
-        const listId = `${this.type}-projects-list`;
+        const listId = `${this.type}-project-list`;
         this.element.querySelector("ul")!.id = listId;
         this.element.querySelector("h2")!.textContent = this.type.toUpperCase() + ' PROJECTS';
+
     }
 
+    /**
+     * This function takes the element that was created in the constructor and inserts it into the DOM.
+     */
     private attach() {
         this.hostElement.insertAdjacentElement('afterbegin', this.element)
     }
@@ -169,6 +265,7 @@ class ProjectInput {
      * @returns an array of strings and numbers.
      */
     private gatherUserInput(): [string, string, number] | void {
+
         const enteredTitle = this.titleInputElement.value;
         const enteredDescription = this.descriptionInputElement.value;
         const enteredPeople = this.peopleInputElement.value;
@@ -198,6 +295,18 @@ class ProjectInput {
         }
     }
 
+
+    /**
+     * The submitHandler function is a private method that takes an event as an argument and prevents
+     * the default behavior of the event. It then calls the gatherUserInput method and assigns the
+     * return value to the userInput variable. If the userInput variable is an array, it destructures
+     * the array and assigns the values to the title, desc, and people variables. It then calls the
+     * addProject method on the projState object and passes in the title, desc, and people variables as
+     * arguments. It then calls the clearInput method.
+     * </code>
+     * @param {Event} event - Event -&gt; this is the event that is triggered when the form is
+     * submitted.
+     */
     /* A decorator that binds the submitHandler method to the class instance. */
     @Autobind
     private submitHandler(event: Event) {
@@ -206,7 +315,9 @@ class ProjectInput {
 
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput;
-            console.log(title, desc, people)
+            if (projState != undefined) {
+                projState.addProject(title, desc, people)
+            }
             this.clearInput()
         }
     }
@@ -244,5 +355,4 @@ class ProjectInput {
 const projInput = new ProjectInput();
 const projListFinished = new ProjectList('finished');
 const projListActive = new ProjectList('active');
-
 
