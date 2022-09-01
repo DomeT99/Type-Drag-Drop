@@ -159,7 +159,16 @@ class ProjectList {
         if (projState != undefined) {
             /* Adding a listener to the projState object. */
             projState.addListener((projects: Project[]) => {
-                this.assignedProjects = projects;
+                debugger
+                const relevantProjects = projects.filter(prj => {
+                    if (this.type === 'active') {
+                        return prj.status === ProjectStatus.Active
+                    } else {
+                        return prj.status === ProjectStatus.Finished
+                    }
+                })
+
+                this.assignedProjects = relevantProjects;
                 this.renderProjects();
             })
         }

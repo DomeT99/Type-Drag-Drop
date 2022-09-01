@@ -147,7 +147,16 @@ var ProjectList = /** @class */ (function () {
         if (projState != undefined) {
             /* Adding a listener to the projState object. */
             projState.addListener(function (projects) {
-                _this.assignedProjects = projects;
+                debugger;
+                var relevantProjects = projects.filter(function (prj) {
+                    if (_this.type === 'active') {
+                        return prj.status === ProjectStatus.Active;
+                    }
+                    else {
+                        return prj.status === ProjectStatus.Finished;
+                    }
+                });
+                _this.assignedProjects = relevantProjects;
                 _this.renderProjects();
             });
         }
