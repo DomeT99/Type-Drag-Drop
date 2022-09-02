@@ -258,9 +258,7 @@ var ProjectList = /** @class */ (function (_super) {
         (_a = listEl.querySelector("li")) === null || _a === void 0 ? void 0 : _a.remove();
         for (var _i = 0, _b = this.assignedProjects; _i < _b.length; _i++) {
             var projItem = _b[_i];
-            var listItem = document.createElement("li");
-            listItem.textContent = projItem.title;
-            listEl.appendChild(listItem);
+            new ProjectItem(this.element.querySelector("ul").id, projItem);
         }
     };
     /**
@@ -273,6 +271,23 @@ var ProjectList = /** @class */ (function (_super) {
         this.element.querySelector("h2").textContent = this.type.toUpperCase() + ' PROJECTS';
     };
     return ProjectList;
+}(Component));
+var ProjectItem = /** @class */ (function (_super) {
+    __extends(ProjectItem, _super);
+    function ProjectItem(hostId, project) {
+        var _this = _super.call(this, 'single-project', hostId, false, project.id) || this;
+        _this.project = project;
+        _this.configure();
+        _this.renderContent();
+        return _this;
+    }
+    ProjectItem.prototype.configure = function () { };
+    ProjectItem.prototype.renderContent = function () {
+        this.element.querySelector("h2").textContent = this.project.title;
+        this.element.querySelector("h3").textContent = this.project.people.toString();
+        this.element.querySelector("p").textContent = this.project.description;
+    };
+    return ProjectItem;
 }(Component));
 //PROJECT INPUT CLASS
 /* The constructor takes two arguments, idTemplate and idHost, and then uses those arguments to get the
