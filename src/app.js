@@ -80,6 +80,43 @@ var ProjectState = /** @class */ (function (_super) {
     ProjectState.prototype.addProject = function (title, description, numOfPeople) {
         var newProject = new Project(Math.random().toString(), title, description, numOfPeople, ProjectStatus.Active);
         this.projects.push(newProject);
+        this.updateListener();
+    };
+    /**
+     * "Find the project with the given id and set its status to the given status."
+     *
+     * The function takes two arguments:
+     *
+     * - projectId: string
+     * - newStatus: ProjectStatus
+     *
+     * The first argument is a string that represents the id of the project we want to move. The second
+     * argument is a ProjectStatus enum value that represents the new status of the project.
+     *
+     * The function starts by finding the project with the given id. If it finds the project, it sets the
+     * project's status to the given status.
+     *
+     * The function uses the find() method to find the project. The find() method takes a callback function
+     * as an argument. The callback function takes a project as an argument and returns true if the
+     * project's id matches the given id.
+     *
+     * The find() method returns the first project that matches the callback function. If it doesn't find a
+     * matching project, it
+     * @param {string} projectId - string - the id of the project to be moved
+     * @param {ProjectStatus} newStatus - ProjectStatus
+     */
+    ProjectState.prototype.moveProject = function (projectId, newStatus) {
+        var project = this.projects.find(function (prj) { return prj.id === projectId; });
+        if (project && project.status !== newStatus) {
+            project.status = newStatus;
+            this.updateListener();
+        }
+    };
+    /**
+     * This function loops through all the listeners and calls them with the current state of the projects
+     * array.
+     */
+    ProjectState.prototype.updateListener = function () {
         for (var _i = 0, _a = this.listeners; _i < _a.length; _i++) {
             var listenerFn = _a[_i];
             listenerFn(this.projects.slice());
@@ -203,34 +240,24 @@ var ProjectList = /** @class */ (function (_super) {
         _this.renderContent();
         return _this;
     }
-    ProjectList.prototype.dragOverHandler = function (_) {
-        var listEl = this.element.querySelector('ul');
-        listEl.classList.add('droppable');
+    ProjectList.prototype.dragOverHandler = function (event) {
+        if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+            event.preventDefault();
+            var listEl = this.element.querySelector('ul');
+            listEl.classList.add('droppable');
+        }
     };
-    ProjectList.prototype.dropHandler = function (_) { };
+    ProjectList.prototype.dropHandler = function (event) {
+        var projId = event.dataTransfer.getData('text/plain');
+        projState.moveProject(projId, this.type === 'active' ? ProjectStatus.Active : ProjectStatus.Finished);
+    };
     ProjectList.prototype.dragLeaveHandler = function (_) {
         var listEl = this.element.querySelector('ul');
         listEl.classList.remove('droppable');
     };
     /**
-     * "If the projState object is not undefined, then add a listener to the projState object that filters
-     * the projects based on the type of the project, and then renders the projects."
-     *
-     * The above function is a bit more complicated than the previous functions, so let's break it down.
-     *
-     * First, we check if the projState object is not undefined. If it is not undefined, then we add a
-     * listener to the projState object.
-     *
-     * The listener is a function that takes in an array of projects. The listener then filters the
-     * projects based on the type of the project.
-     *
-     * If the type of the project is active, then the listener filters the projects to only include
-     * projects that have a status of active.
-     *
-     * If the type of the project is finished, then the listener filters the projects to only include
-     * projects that have a status of finished.
-     *
-     *
+     * The configure function is called when the class is instantiated. It adds event listeners to the
+     * element, and if the projState object is defined, it adds a listener to it.
      */
     ProjectList.prototype.configure = function () {
         var _this = this;
@@ -265,11 +292,10 @@ var ProjectList = /** @class */ (function (_super) {
      * property of the class. So if the class is an instance of the `ProjectList` class, the `type`
      */
     ProjectList.prototype.renderProjects = function () {
-        var _a;
         var listEl = document.getElementById("".concat(this.type, "-project-list"));
-        (_a = listEl.querySelector("li")) === null || _a === void 0 ? void 0 : _a.remove();
-        for (var _i = 0, _b = this.assignedProjects; _i < _b.length; _i++) {
-            var projItem = _b[_i];
+        listEl.innerHTML = '';
+        for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
+            var projItem = _a[_i];
             new ProjectItem(this.element.querySelector("ul").id, projItem);
         }
     };
@@ -285,6 +311,9 @@ var ProjectList = /** @class */ (function (_super) {
     __decorate([
         Autobind
     ], ProjectList.prototype, "dragOverHandler", null);
+    __decorate([
+        Autobind
+    ], ProjectList.prototype, "dropHandler", null);
     __decorate([
         Autobind
     ], ProjectList.prototype, "dragLeaveHandler", null);
@@ -312,11 +341,10 @@ var ProjectItem = /** @class */ (function (_super) {
         configurable: true
     });
     ProjectItem.prototype.dragStartHandler = function (event) {
-        console.log(event);
+        event.dataTransfer.setData('text/plain', this.project.id);
+        event.dataTransfer.effectAllowed = 'move';
     };
-    ProjectItem.prototype.dragEndHandler = function (event) {
-        console.log("End");
-    };
+    ProjectItem.prototype.dragEndHandler = function (_) { console.log("End"); };
     ProjectItem.prototype.configure = function () {
         this.element.addEventListener('dragstart', this.dragStartHandler);
         this.element.addEventListener('dragend', this.dragEndHandler);
