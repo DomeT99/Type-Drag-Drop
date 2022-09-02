@@ -203,7 +203,7 @@ takes in a string, and it has a `configure` method that adds a listener to the `
 and it has a `renderProjects` method that renders the projects, and it has a `renderContent` method
 that sets the id of the ul element to the string, and it sets the text content of the h2 element to
 the string. */
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList extends Component<HTMLDivElement, HTMLElement> implements DragTarget {
     /* Defining the types of the variables. */
     assignedProjects: Project[];
 
@@ -217,6 +217,19 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
         this.configure();
         /* Calling the renderContent method. */
         this.renderContent();
+    }
+
+    @Autobind
+    dragOverHandler(_: DragEvent): void {
+        const listEl = this.element.querySelector('ul')!;
+        listEl.classList.add('droppable');
+    }
+    dropHandler(_: DragEvent): void { }
+
+    @Autobind
+    dragLeaveHandler(_: DragEvent): void { 
+        const listEl = this.element.querySelector('ul')!;
+        listEl.classList.remove('droppable');
     }
 
     /**
@@ -240,6 +253,11 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
      * 
      */
     configure() {
+        this.element.addEventListener('dragover', this.dragOverHandler)
+        this.element.addEventListener('dragleave', this.dragLeaveHandler)
+        this.element.addEventListener('drop', this.dropHandler)
+
+
         if (projState != undefined) {
             /* Adding a listener to the projState object. */
             projState.addListener((projects: Project[]) => {

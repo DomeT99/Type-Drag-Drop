@@ -203,6 +203,15 @@ var ProjectList = /** @class */ (function (_super) {
         _this.renderContent();
         return _this;
     }
+    ProjectList.prototype.dragOverHandler = function (_) {
+        var listEl = this.element.querySelector('ul');
+        listEl.classList.add('droppable');
+    };
+    ProjectList.prototype.dropHandler = function (_) { };
+    ProjectList.prototype.dragLeaveHandler = function (_) {
+        var listEl = this.element.querySelector('ul');
+        listEl.classList.remove('droppable');
+    };
     /**
      * "If the projState object is not undefined, then add a listener to the projState object that filters
      * the projects based on the type of the project, and then renders the projects."
@@ -225,6 +234,9 @@ var ProjectList = /** @class */ (function (_super) {
      */
     ProjectList.prototype.configure = function () {
         var _this = this;
+        this.element.addEventListener('dragover', this.dragOverHandler);
+        this.element.addEventListener('dragleave', this.dragLeaveHandler);
+        this.element.addEventListener('drop', this.dropHandler);
         if (projState != undefined) {
             /* Adding a listener to the projState object. */
             projState.addListener(function (projects) {
@@ -270,6 +282,12 @@ var ProjectList = /** @class */ (function (_super) {
         this.element.querySelector("ul").id = listId;
         this.element.querySelector("h2").textContent = this.type.toUpperCase() + ' PROJECTS';
     };
+    __decorate([
+        Autobind
+    ], ProjectList.prototype, "dragOverHandler", null);
+    __decorate([
+        Autobind
+    ], ProjectList.prototype, "dragLeaveHandler", null);
     return ProjectList;
 }(Component));
 var ProjectItem = /** @class */ (function (_super) {
