@@ -293,12 +293,27 @@ var ProjectItem = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    ProjectItem.prototype.configure = function () { };
+    ProjectItem.prototype.dragStartHandler = function (event) {
+        console.log(event);
+    };
+    ProjectItem.prototype.dragEndHandler = function (event) {
+        console.log("End");
+    };
+    ProjectItem.prototype.configure = function () {
+        this.element.addEventListener('dragstart', this.dragStartHandler);
+        this.element.addEventListener('dragend', this.dragEndHandler);
+    };
     ProjectItem.prototype.renderContent = function () {
         this.element.querySelector("h2").textContent = this.project.title;
         this.element.querySelector("h3").textContent = this.persons + ' assigned';
         this.element.querySelector("p").textContent = this.project.description;
     };
+    __decorate([
+        Autobind
+    ], ProjectItem.prototype, "dragStartHandler", null);
+    __decorate([
+        Autobind
+    ], ProjectItem.prototype, "dragEndHandler", null);
     return ProjectItem;
 }(Component));
 //PROJECT INPUT CLASS
